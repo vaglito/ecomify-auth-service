@@ -1,8 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ValidationPipe } from '@nestjs/common';
-import { HttpRpcExceptionFilter } from './common/filters/http-rpc-exception.filter';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { CustomRpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
 async function bootstrap() {
@@ -18,10 +17,10 @@ async function bootstrap() {
   );
 
   app.useGlobalPipes(new ValidationPipe());
-  // app.useGlobalFilters(new HttpRpcExceptionFilter()); // redundant
   app.useGlobalFilters(new CustomRpcExceptionFilter());
 
+  const logger = new Logger('Auth-Microservice');
   await app.listen();
-  console.log('Auth Microservice is listening on port ' + (process.env.PORT || 3001));
+  logger.log('Auth Microservice is listening on port ' + (process.env.PORT || 3001));
 }
 bootstrap();
