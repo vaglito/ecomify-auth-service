@@ -1,6 +1,6 @@
 # Ecomify Auth Service
 
-Authentication microservice for the Ecomify ecosystem. This service handles user registration, login, and JWT token validation. It is built with **NestJS** and uses **TCP** as the transport layer to communicate with the API Gateway or other services.
+Authentication microservice for the Ecomify ecosystem. This service handles user registration, login, and JWT token validation. It is built with **NestJS** and uses **REST API** as the primary interface.
 
 ## Features
 
@@ -52,15 +52,13 @@ npm run start:dev
 npm run start:prod
 ```
 
-## Message Patterns (Microservice)
+## API Endpoints (REST)
+The API documentation is available via Swagger UI at `/api/docs`.
 
-This service listens for the following Message Patterns via TCP:
-
-### AuthController
-
--   `{ cmd: 'login' }`: Sign in. Expects a payload with `{ email, password }`.
--   `{ cmd: 'register' }`: Register new user. Expects a payload with `{ email, password, roles? }`.
--   `{ cmd: 'validate_token' }`: Validate a JWT token. Expects the token as payload (string).
+### Auth
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/register` - Register user
+- `GET /api/auth/check-status` - Verify JWT token (Requires Bearer Token)
 
 ## Project Structure
 
