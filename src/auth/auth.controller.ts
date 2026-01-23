@@ -1,25 +1,39 @@
-import { Controller, UseGuards } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller, Post, Body, Get, UseGuards, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
-@Controller()
+@ApiTags('Auth')
+@Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
-    @MessagePattern({ cmd: 'login' })
-    async login(@Payload() loginDto: LoginDto) {
+    @Post('login')
+    @ApiOperation({ summary: 'Login user' })
+    @ApiResponse({ status: 200, description: 'User logged in successfully' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto);
     }
 
-    @MessagePattern({ cmd: 'register' })
-    async register(@Payload() registerDto: RegisterDto) {
+    @Post('register')
+    @ApiOperation({ summary: 'Register user' })
+    @ApiResponse({ status: 201, description: 'User registered successfully' })
+    @ApiResponse({ status: 409, description: 'Email already exists' })
+    async register(@Body() registerDto: RegisterDto) {
         return this.authService.register(registerDto);
     }
 
-    @MessagePattern({ cmd: 'validate_token' })
-    async validateToken(@Payload() token: string) {
+    @Get('check-status')
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Verify token' })
+    async checkAuthStatus(@Headers('authorization') authHeader: string) {
+        if (!authHeader) {
+            throw new UnauthorizedException('No token provided');
+        }
+        const token = authHeader.replace('Bearer ', '');
         return this.authService.validateToken(token);
     }
 }

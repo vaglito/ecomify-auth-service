@@ -1,11 +1,9 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
-
 
 @Injectable()
 export class AuthService {
@@ -26,10 +24,7 @@ export class AuthService {
     async login(loginDto: LoginDto) {
         const user = await this.validateUser(loginDto.email, loginDto.password);
         if (!user) {
-            throw new RpcException({
-                message: 'Invalid credentials',
-                statusCode: HttpStatus.UNAUTHORIZED,
-            });
+            throw new UnauthorizedException('Invalid credentials');
         }
         const payload = { email: user.email, sub: user.id, roles: user.roles };
         return {
@@ -41,10 +36,7 @@ export class AuthService {
     async register(registerDto: RegisterDto) {
         const existingUser = await this.usersService.findOneByEmail(registerDto.email);
         if (existingUser) {
-            throw new RpcException({
-                message: 'Email already exists',
-                statusCode: HttpStatus.CONFLICT,
-            });
+            throw new ConflictException('Email already exists');
         }
 
         const hashedPassword = await bcrypt.hash(registerDto.password, 10);
@@ -62,18 +54,12 @@ export class AuthService {
             const payload = this.jwtService.verify(token);
             const user = await this.usersService.findOneById(payload.sub);
             if (!user) {
-                throw new RpcException({
-                    message: 'User not found',
-                    statusCode: HttpStatus.UNAUTHORIZED,
-                });
+                throw new UnauthorizedException('User not found');
             }
             const { password, ...result } = user;
             return result;
         } catch (e) {
-            throw new RpcException({
-                message: 'Invalid token',
-                statusCode: HttpStatus.UNAUTHORIZED,
-            });
+            throw new UnauthorizedException('Invalid token');
         }
     }
 }

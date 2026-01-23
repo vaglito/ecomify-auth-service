@@ -1,26 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import { CustomRpcExceptionFilter } from './common/filters/rpc-exception.filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host: '0.0.0.0',
-        port: parseInt(process.env.PORT || '3001'),
-      },
-    },
-  );
+  const app = await NestFactory.create(AppModule);
+  const logger = new Logger('Auth-Service');
 
-  app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalFilters(new CustomRpcExceptionFilter());
+  app.setGlobalPrefix('api');
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
 
-  const logger = new Logger('Auth-Microservice');
-  await app.listen();
-  logger.log('Auth Microservice is listening on port ' + (process.env.PORT || 3001));
+  const config = new DocumentBuilder()
+    .setTitle('Ecomify Auth Service')
+    .setDescription('Authentication Service with JWT and REST')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  const port = parseInt(process.env.PORT || '3001');
+  await app.listen(port);
+  logger.log(`Auth Service is listening on port ${port}`);
+  logger.log(`Swagger docs available at http://localhost:${port}/api/docs`);
 }
 bootstrap();
